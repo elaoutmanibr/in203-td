@@ -120,6 +120,10 @@ void savePicture( const std::string& filename, int W, int H, const std::vector<i
     ofs.close();
 }
 
+const int W = 800;
+const int H = 600;
+std::vector<int> res(W*H);
+
 int main( int nargs, char* argv[] )
 {
 	MPI_Init( &nargs, &argv );
@@ -136,18 +140,18 @@ int main( int nargs, char* argv[] )
 	//int tag = 500;
 	//MPI_Status status;
 	
-	const int W = 800;
-    const int H = 600;
+	
     const int Hloc = H/nbp;
     const int maxIter = 8*65536;
     std::vector<int> iters(W*Hloc); 
-    std::vector<int> res(W*H);
+    
     
 	iters = computeMandelbrotSet( W,H, maxIter, (nbp-rank-1)*Hloc,(nbp-rank)*Hloc,Hloc  );
 	MPI_Gather(iters.data(), W * Hloc, MPI_INT, res.data(), W * Hloc, MPI_INT, 0, MPI_COMM_WORLD);
 
-	
-	savePicture("mandelbrot.tga", W, H, res, maxIter);
+	if (rank==0){
+		savePicture("mandelbrot.tga", W, H, res, maxIter);
+	}
 	
 
 	// A la fin du programme, on doit synchroniser une dernière fois tous les processus
