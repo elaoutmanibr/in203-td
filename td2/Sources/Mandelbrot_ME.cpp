@@ -168,7 +168,7 @@ int main( int nargs, char* argv[] )
 		
 		while (row<H){
 			int ligne;
-			MPI_Recv(&iters[0],W,MPI_INT,MPI_ANY_SOURCE,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
+			MPI_Recv(iters.data(),W,MPI_INT,MPI_ANY_SOURCE,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
 			
 			if (status.MPI_SOURCE != 0){
 				

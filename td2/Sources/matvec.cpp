@@ -117,7 +117,7 @@ std::vector<double> multip_vect_lig(Matrix& A, std::vector<double>& u, int rank,
     std::vector<double> v(Nloc, 0.);
     for ( int i = rank*Nloc; i < (rank+1)*Nloc; ++i ) {
         for (unsigned int j = 0; j < u.size(); ++j ) {
-            v[i] += A(i,j)*u[j];
+            v[i%Nloc] += A(i,j)*u[j];
         }            
     }
     return v;
@@ -150,11 +150,13 @@ int main( int nargs, char* argv[] )
     
     //std::cout << " u : " << u << std::endl;
     //std::vector<double> v1 = A*u;
-    std::vector<double> v = multip_vect_col(A,u,rank,Nloc);
-    MPI_Allreduce(&v, &r, N, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    //std::vector<double> v = multip_vect_col(A,u,rank,Nloc);
+    std::vector<double> v = multip_vect_lig(A,u,rank,Nloc);
+    //MPI_Allreduce(v.data(), r.data(), N, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allgather(v.data(),Nloc, MPI_DOUBLE,r.data(), Nloc, MPI_DOUBLE, MPI_COMM_WORLD);
     
     //std::cout << "A.u = " << v1 << std::endl;
-    //std::cout << "A.u = " << r << std::endl;
+    std::cout << "A.u = " << r << std::endl;
     MPI_Finalize();
     return EXIT_SUCCESS;
 }
