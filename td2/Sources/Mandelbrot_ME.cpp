@@ -122,7 +122,7 @@ void savePicture( const std::string& filename, int W, int H, const std::vector<i
 
 const int W = 800;
 const int H = 600;
-std::vector<int> res(W*H);
+
 
 
 
@@ -146,7 +146,7 @@ int main( int nargs, char* argv[] )
     const int maxIter = 8*65536;
     // std::vector<int> iters(W*Hloc); 
     
-    int row;
+    std::vector<int> iters(W);
 	
 	
 	//~ iters = computeMandelbrotSet( W,H, maxIter, (nbp-rank-1)*Hloc,(nbp-rank)*Hloc,Hloc  );
@@ -158,18 +158,27 @@ int main( int nargs, char* argv[] )
 	
 	
 	if (rank==0){
-		int v=0;
-		row =0;
-
-		for (;row<nbp;row++){
-			MPI_Send(&row,1,MPI_INT,row,tag,MPI_COMM_WORLD);
+		std::vector<int> res(W*H);
+		int row =0;
+		
+		for (int dest =1 ;dest<nbp; dest++){
+			MPI_Send(&row,1,MPI_INT,dest,tag,MPI_COMM_WORLD);
+			row++;
 		}
 		
 		while (row<H){
-			MPI_Recv(&v,1,MPI_INT,MPI_ANY_SOURCE,tag,MPI_COMM_WORLD,&status);
+			int ligne;
+			MPI_Recv(&iters[0],W,MPI_INT,MPI_ANY_SOURCE,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
 			
-			MPI_Send(&row,1,MPI_INT,status.MPI_SOURCE,tag,MPI_COMM_WORLD);
-			row++;
+			if (status.MPI_SOURCE != 0){
+				
+				ligne = status.MPI_TAG;
+				for (int k =0; k<W; k++){
+					res[ligne*W+k]= iters[k];
+				}
+				MPI_Send(&row,1,MPI_INT,status.MPI_SOURCE,tag,MPI_COMM_WORLD);
+				row++;
+			}
 		}
 		
 
@@ -182,13 +191,14 @@ int main( int nargs, char* argv[] )
 		
 	}else{
 		int command = 0;
-		int return_value ;
 		MPI_Recv(&command,1,MPI_INT,0,tag,MPI_COMM_WORLD,&status);
 		while (command != -1){
-			computeMandelbrotSetRow(W, H, maxIter, command, res.data() + W*command );
-			return_value = 1;
-			MPI_Send(&return_value,1,MPI_INT,0,tag,MPI_COMM_WORLD);
-			MPI_Recv(&command,1,MPI_INT,0,tag,MPI_COMM_WORLD,&status);	
+			
+			computeMandelbrotSetRow(W, H, maxIter, command, iters.data());
+			std::cout << rank << "\t" << command << std::endl;
+			MPI_Send(iters.data(),W,MPI_INT,0,command,MPI_COMM_WORLD);
+			MPI_Recv(&command,1,MPI_INT,0,tag,MPI_COMM_WORLD,&status);
+			std::cout << rank << "\t" << command << std::endl;
 		}
 	}
 	
