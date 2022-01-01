@@ -4,9 +4,6 @@
 #include <fstream>
 #include <chrono>
 #include <mpi.h>
-#if defined(_OPENMP)
-#include <omp.h>
-#endif
 #include "contexte.hpp"
 #include "individu.hpp"
 #include "graphisme/src/SDL2/sdl2.hpp"
@@ -221,10 +218,8 @@ void simulation(bool affiche)
 			màjStatistique(grille, population);
 			// On parcout la population pour voir qui est contaminé et qui ne l'est pas, d'abord pour la grippe puis pour l'agent pathogène
 			std::size_t compteur_grippe = 0, compteur_agent = 0, mouru = 0;
-			# pragma omp parallel for reduction(+:compteur_agent,compteur_grippe)
 			for ( auto& personne : population )
 			{
-				
 				if (personne.testContaminationGrippe(grille, contexte.interactions, grippe, agent))
 				{
 					compteur_grippe ++;
@@ -235,12 +230,6 @@ void simulation(bool affiche)
 					compteur_agent ++;
 					personne.estContaminé(agent);
 				}
-				
-			}
-			
-			
-			for ( auto& personne : population )
-			{
 				// On vérifie si il n'y a pas de personne qui veillissent de veillesse et on génère une nouvelle personne si c'est le cas.
 				if (personne.doitMourir())
 				{
@@ -254,12 +243,13 @@ void simulation(bool affiche)
 			}
 			
 			
-			int retard = 0;
+			
+			
+			
 			int flag =0;
 			int demand = 0;
 			MPI_Iprobe( 1, 50, MPI_COMM_WORLD, &flag, &status );
 			if(!flag){
-				
 				MPI_Recv(&demand, 1, MPI_INT, 1, 50, MPI_COMM_WORLD, &status);
 				auto const& statistiques = grille.getStatistiques();
 				
@@ -279,16 +269,12 @@ void simulation(bool affiche)
 						
 					}
 				}
-				
-				MPI_Send(&retard,1,MPI_INT,1,500,MPI_COMM_WORLD);
 				MPI_Send(valuesGrippe.data(), largeur_grille*hauteur_grille, MPI_INT, 1, 200, MPI_COMM_WORLD);
 				MPI_Send(valuesAgent.data(), largeur_grille*hauteur_grille, MPI_INT, 1, 201, MPI_COMM_WORLD);
-				retard =0;
-			}else{
-				retard++;
 			}
 			
 
+			
 			output << jours_écoulés << "\t" << grille.nombreTotalContaminésGrippe() << "\t"
 			   << grille.nombreTotalContaminésAgentPathogène() << std::endl;
 			jours_écoulés += 1;
@@ -321,16 +307,14 @@ void simulation(bool affiche)
 				valuesAgent[k] = -1;
 		}
 		std::size_t jours_écoulés = 0;
-		int retard = -1;
 		while (1){
 			int askData = 1;
 			MPI_Send(&askData,1,MPI_INT,0,50,MPI_COMM_WORLD);
-			MPI_Recv(&retard, 1, MPI_INT, 0, 500, MPI_COMM_WORLD, &status);
-			//std::cout << retard <<std::endl;
 			MPI_Recv(valuesGrippe.data(),largeur_grille*hauteur_grille, MPI_INT, 0, 200, MPI_COMM_WORLD, &status);
 			MPI_Recv(valuesAgent.data(),largeur_grille*hauteur_grille, MPI_INT, 0, 201, MPI_COMM_WORLD, &status);
-			jours_écoulés += retard;
+			
 			if (affiche) afficheSimulation2(écran, valuesGrippe, valuesAgent, largeur_grille, hauteur_grille, jours_écoulés);
+			jours_écoulés += 1;
 		}
 	
 	

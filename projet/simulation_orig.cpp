@@ -62,6 +62,7 @@ void afficheSimulation(sdl2::window& écran, épidémie::Grille const& grille, s
             auto const& stat = statistiques[i+j*largeur_grille];
             int valueGrippe = stat.nombre_contaminant_grippé_et_contaminé_par_agent+stat.nombre_contaminant_seulement_grippé;
             int valueAgent  = stat.nombre_contaminant_grippé_et_contaminé_par_agent+stat.nombre_contaminant_seulement_contaminé_par_agent;
+            if (valueAgent != 0) std::cout << valueAgent << std::endl;
             std::uint16_t origx = i*stepX;
             std::uint16_t origy = j*stepY;
             std::uint8_t red = valueGrippe > 0 ? 127+std::uint8_t(std::min(128., 0.5*factor*valueGrippe)) : 0;
@@ -128,7 +129,7 @@ void simulation(bool affiche)
     while (!quitting)
     {
 		
-		auto start = std::chrono::system_clock::now();
+		//auto start = std::chrono::system_clock::now();
 		
         auto events = queue.pull_events();
         for ( const auto& e : events)
@@ -197,9 +198,9 @@ void simulation(bool affiche)
                << grille.nombreTotalContaminésAgentPathogène() << std::endl;
         jours_écoulés += 1;
         
-        auto end = std::chrono::system_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-		std::cout << elapsed.count() << '\n';
+        //auto end = std::chrono::system_clock::now();
+       // auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+		//std::cout << elapsed.count() << '\n';
 		
     }// Fin boucle temporelle
     output.close();

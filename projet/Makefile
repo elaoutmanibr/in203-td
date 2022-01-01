@@ -9,7 +9,7 @@ else
 CXXFLAGS += -O3 -march=native -Wall
 endif
 
-
+CXX = mpic++
 LIBS = $(LIB) `sdl2-config --cflags` -lSDL2_ttf -lSDL2_image  `sdl2-config --libs` 
 
 ALL= simulation.exe
