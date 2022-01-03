@@ -10,11 +10,11 @@ CXXFLAGS += -O3 -march=native -Wall
 endif
 
 CXX = mpic++
-#SOURCE = simulation.cpp
+SOURCE = simulation.cpp
 #SOURCE = simulation_orig.cpp
 #SOURCE = simulation_sync_affiche_mpi.cpp
 #SOURCE = simulation_async_affiche_mpi.cpp
-SOURCE = simulation_async_omp.cpp
+#SOURCE = simulation_async_omp.cpp
 
 LIBS = $(LIB) `sdl2-config --cflags` -lSDL2_ttf -lSDL2_image  `sdl2-config --libs` 
 
