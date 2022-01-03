@@ -62,7 +62,6 @@ void afficheSimulation(sdl2::window& écran, épidémie::Grille const& grille, s
             auto const& stat = statistiques[i+j*largeur_grille];
             int valueGrippe = stat.nombre_contaminant_grippé_et_contaminé_par_agent+stat.nombre_contaminant_seulement_grippé;
             int valueAgent  = stat.nombre_contaminant_grippé_et_contaminé_par_agent+stat.nombre_contaminant_seulement_contaminé_par_agent;
-            if (valueAgent != 0) std::cout << valueAgent << std::endl;
             std::uint16_t origx = i*stepX;
             std::uint16_t origy = j*stepY;
             std::uint8_t red = valueGrippe > 0 ? 127+std::uint8_t(std::min(128., 0.5*factor*valueGrippe)) : 0;
@@ -90,7 +89,7 @@ void simulation(bool affiche)
     épidémie::ContexteGlobal contexte;
     // contexte.déplacement_maximal = 1; <= Si on veut moins de brassage
     // contexte.taux_population = 400'000;
-    //contexte.taux_population = 1'000;
+    //contexte.taux_population = 400'000;
     contexte.interactions.β = 60.;
     std::vector<épidémie::Individu> population;
     population.reserve(contexte.taux_population);
@@ -126,10 +125,13 @@ void simulation(bool affiche)
 
     std::cout << "Début boucle épidémie" << std::endl << std::flush;
     
+    int count =0;
+    int sum_elapsed =0;
+    
     while (!quitting)
     {
 		
-		//auto start = std::chrono::system_clock::now();
+		auto start = std::chrono::system_clock::now();
 		
         auto events = queue.pull_events();
         for ( const auto& e : events)
@@ -198,12 +200,16 @@ void simulation(bool affiche)
                << grille.nombreTotalContaminésAgentPathogène() << std::endl;
         jours_écoulés += 1;
         
-        //auto end = std::chrono::system_clock::now();
-       // auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-		//std::cout << elapsed.count() << '\n';
+        auto end = std::chrono::system_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        sum_elapsed += elapsed.count();
+		count++;
+		
 		
     }// Fin boucle temporelle
     output.close();
+    if (affiche) std::cout << "Temps moyen avec affichage: " << sum_elapsed/count <<std::endl;
+    else std::cout << "Temps moyen sans affichage : " << sum_elapsed/count <<std::endl;
 }
 
 int main(int argc, char* argv[])

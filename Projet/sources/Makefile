@@ -10,6 +10,12 @@ CXXFLAGS += -O3 -march=native -Wall
 endif
 
 CXX = mpic++
+#SOURCE = simulation.cpp
+#SOURCE = simulation_orig.cpp
+#SOURCE = simulation_sync_affiche_mpi.cpp
+#SOURCE = simulation_async_affiche_mpi.cpp
+SOURCE = simulation_async_omp.cpp
+
 LIBS = $(LIB) `sdl2-config --cflags` -lSDL2_ttf -lSDL2_image  `sdl2-config --libs` 
 
 ALL= simulation.exe
@@ -50,8 +56,8 @@ graphisme/src/SDL2/formated_texte.o : graphisme/src/SDL2/window.hpp graphisme/sr
 graphisme/src/SDL2/image.o : graphisme/src/SDL2/window.hpp graphisme/src/SDL2/image.hpp graphisme/src/SDL2/image.cpp
 	$(CXX) $(CXXFLAGS) -c graphisme/src/SDL2/image.cpp -o graphisme/src/SDL2/image.o
 
-simulation.exe:	$(OBJS) simulation.cpp
-	$(CXX) $(CXXFLAGS) $(OBJS) simulation.cpp -o simulation.exe $(LIBS)
+simulation.exe:	$(OBJS) $(SOURCE)
+	$(CXX) $(CXXFLAGS) $(OBJS) $(SOURCE) -o simulation.exe $(LIBS)
 
 help:
 	@echo "Available targets : "

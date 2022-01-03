@@ -124,7 +124,7 @@ void simulation(bool affiche)
 	MPI_Comm_rank(globComm, &rank);
 	//MPI_Request request;
 	
-	if (rank=0) MPI_Comm_split(MPI_COMM_WORLD, 0, rank, &Comm_affichage);
+	if (rank==0) MPI_Comm_split(MPI_COMM_WORLD, 0, rank, &Comm_affichage);
 	else MPI_Comm_split(MPI_COMM_WORLD, 1, rank, &Comm_sim);
 	
 	unsigned int graine_aléatoire = 1;
@@ -332,7 +332,7 @@ void simulation(bool affiche)
 			//std::cout << retard <<std::endl;
 			MPI_Recv(valuesGrippe.data(),largeur_grille*hauteur_grille, MPI_INT, 0, 200, MPI_COMM_WORLD, &status);
 			MPI_Recv(valuesAgent.data(),largeur_grille*hauteur_grille, MPI_INT, 0, 201, MPI_COMM_WORLD, &status);
-			jours_écoulés += retard;
+			jours_écoulés += retard+1;
 			if (affiche) afficheSimulation2(écran, valuesGrippe, valuesAgent, largeur_grille, hauteur_grille, jours_écoulés);
 		}
 	

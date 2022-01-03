@@ -137,11 +137,14 @@ void simulation(bool affiche)
 		épidémie::ContexteGlobal contexte;
 		std::size_t jours_écoulés = 0;
 		int         jour_apparition_grippe = 0;
+		
 		int         nombre_immunisés_grippe= (contexte.taux_population*23)/100;
 		
 		// contexte.déplacement_maximal = 1; <= Si on veut moins de brassage
 		// contexte.taux_population = 400'000;
-		//contexte.taux_population = 1'000;
+		
+		//contexte.taux_population = 400'000;
+		std::cout << contexte.taux_population << std::endl;
 		contexte.interactions.β = 60.;
 		std::vector<épidémie::Individu> population;
 		population.reserve(contexte.taux_population);
@@ -181,15 +184,19 @@ void simulation(bool affiche)
 		bool quitting = false;
 		sdl2::event_queue queue;
 		
+		int count = 0;
+		int sum_elapsed = 0;
 		while (!quitting)
 		{
 			auto start = std::chrono::system_clock::now();
 			auto events = queue.pull_events();
+			
 			for ( const auto& e : events)
 			{
 				if (e->kind_of_event() == sdl2::event::quit)
 					quitting = true;
 			}
+			
 			if (jours_écoulés%365 == 0)// Si le premier Octobre (début de l'année pour l'épidémie ;-) )
 			{
 				
@@ -198,15 +205,18 @@ void simulation(bool affiche)
 				jour_apparition_grippe = grippe.dateCalculImportationGrippe();
 				grippe.calculNouveauTauxTransmission();
 				// 23% des gens sont immunisés. On prend les 23% premiers
+				
 				for ( int ipersonne = 0; ipersonne < nombre_immunisés_grippe; ++ipersonne)
 				{
 					population[ipersonne].devientImmuniséGrippe();
 				}
+				
 				for ( int ipersonne = nombre_immunisés_grippe; ipersonne < int(contexte.taux_population); ++ipersonne )
 				{
 					population[ipersonne].redevientSensibleGrippe();
 				}
 			}
+			
 			if (jours_écoulés%365 == std::size_t(jour_apparition_grippe))
 			{
 				for (int ipersonne = nombre_immunisés_grippe; ipersonne < nombre_immunisés_grippe + 25; ++ipersonne )
@@ -215,6 +225,7 @@ void simulation(bool affiche)
 				}
 			}
 			// Mise à jour des statistiques pour les cases de la grille :
+			
 			màjStatistique(grille, population);
 			// On parcout la population pour voir qui est contaminé et qui ne l'est pas, d'abord pour la grippe puis pour l'agent pathogène
 			std::size_t compteur_grippe = 0, compteur_agent = 0, mouru = 0;
@@ -241,6 +252,7 @@ void simulation(bool affiche)
 				personne.veillirDUnJour();
 				personne.seDéplace(grille);
 			}
+			
 			auto const& statistiques = grille.getStatistiques();
 			
 			std::vector<int> valuesGrippe;
@@ -276,17 +288,19 @@ void simulation(bool affiche)
 			
 			auto end = std::chrono::system_clock::now();
 			auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-			std::cout << elapsed.count() << '\n';			
+			sum_elapsed += elapsed.count();
+			count++;		
 			
 		}
 		output.close();
-				
+		std::cout << "Temps moyen MPI sync: " << sum_elapsed/count <<std::endl;
 		
 	}
 	
 	
 		
 	if (rank==1){
+		
 			
 		constexpr const unsigned int largeur_écran = 1280, hauteur_écran = 1024;
 		sdl2::window écran("Simulation épidémie de grippe", {largeur_écran,hauteur_écran});
@@ -303,6 +317,7 @@ void simulation(bool affiche)
 		}
 		std::size_t jours_écoulés = 0;
 		while (1){
+			
 			MPI_Recv(valuesGrippe.data(),largeur_grille*hauteur_grille, MPI_INT, 0, 200, MPI_COMM_WORLD, &status);
 			MPI_Recv(valuesAgent.data(),largeur_grille*hauteur_grille, MPI_INT, 0, 201, MPI_COMM_WORLD, &status);
 			

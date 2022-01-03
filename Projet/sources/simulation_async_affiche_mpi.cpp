@@ -141,7 +141,7 @@ void simulation(bool affiche)
 		
 		// contexte.déplacement_maximal = 1; <= Si on veut moins de brassage
 		// contexte.taux_population = 400'000;
-		//contexte.taux_population = 1'000;
+		//contexte.taux_population = 400'000;
 		contexte.interactions.β = 60.;
 		std::vector<épidémie::Individu> population;
 		population.reserve(contexte.taux_population);
@@ -180,7 +180,9 @@ void simulation(bool affiche)
 		
 		bool quitting = false;
 		sdl2::event_queue queue;
-		
+		int retard =0;
+		int sum_elapsed = 0;
+		int count =0;
 		while (!quitting)
 		{
 			auto start = std::chrono::system_clock::now();
@@ -248,8 +250,9 @@ void simulation(bool affiche)
 			
 			int flag =0;
 			int demand = 0;
+			
 			MPI_Iprobe( 1, 50, MPI_COMM_WORLD, &flag, &status );
-			if(!flag){
+			if(flag){
 				MPI_Recv(&demand, 1, MPI_INT, 1, 50, MPI_COMM_WORLD, &status);
 				auto const& statistiques = grille.getStatistiques();
 				
@@ -269,8 +272,12 @@ void simulation(bool affiche)
 						
 					}
 				}
+				MPI_Send(&retard, 1, MPI_INT, 1, 500, MPI_COMM_WORLD);
 				MPI_Send(valuesGrippe.data(), largeur_grille*hauteur_grille, MPI_INT, 1, 200, MPI_COMM_WORLD);
 				MPI_Send(valuesAgent.data(), largeur_grille*hauteur_grille, MPI_INT, 1, 201, MPI_COMM_WORLD);
+				retard =0;
+			}else{
+				retard++;
 			}
 			
 
@@ -281,9 +288,11 @@ void simulation(bool affiche)
 						
 			auto end = std::chrono::system_clock::now();
 			auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-			std::cout << elapsed.count() << '\n';
+			sum_elapsed += elapsed.count();
+			count++;
 		}
 		output.close();
+		std::cout << "Temps moyen MPI async : " << sum_elapsed/count <<std::endl;
 		
 				
 		
@@ -307,14 +316,16 @@ void simulation(bool affiche)
 				valuesAgent[k] = -1;
 		}
 		std::size_t jours_écoulés = 0;
+		int retard = -1;
 		while (1){
 			int askData = 1;
 			MPI_Send(&askData,1,MPI_INT,0,50,MPI_COMM_WORLD);
+			MPI_Recv(&retard,1, MPI_INT, 0, 500, MPI_COMM_WORLD, &status);
 			MPI_Recv(valuesGrippe.data(),largeur_grille*hauteur_grille, MPI_INT, 0, 200, MPI_COMM_WORLD, &status);
 			MPI_Recv(valuesAgent.data(),largeur_grille*hauteur_grille, MPI_INT, 0, 201, MPI_COMM_WORLD, &status);
 			
 			if (affiche) afficheSimulation2(écran, valuesGrippe, valuesAgent, largeur_grille, hauteur_grille, jours_écoulés);
-			jours_écoulés += 1;
+			jours_écoulés += retard+1;
 		}
 	
 	
